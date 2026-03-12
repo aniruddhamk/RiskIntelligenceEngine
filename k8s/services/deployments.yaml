@@ -1,0 +1,159 @@
+---
+# Client Risk API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-risk-api
+  namespace: aml
+  labels:
+    app: client-risk-api
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: client-risk-api
+  template:
+    metadata:
+      labels:
+        app: client-risk-api
+    spec:
+      containers:
+        - name: client-risk-api
+          image: ghcr.io/aniruddhamk/risk-client-risk-api:latest
+          ports:
+            - containerPort: 8001
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: aml-secrets
+                  key: database_url
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-risk-api
+  namespace: aml
+spec:
+  selector:
+    app: client-risk-api
+  ports:
+    - port: 8001
+      targetPort: 8001
+---
+# ML Scoring Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-scoring
+  namespace: aml
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-scoring
+  template:
+    metadata:
+      labels:
+        app: ml-scoring
+    spec:
+      containers:
+        - name: ml-scoring
+          image: ghcr.io/aniruddhamk/risk-ml-scoring:latest
+          ports:
+            - containerPort: 8005
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: model-storage
+              mountPath: /app/models/saved
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: model-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-scoring
+  namespace: aml
+spec:
+  selector:
+    app: ml-scoring
+  ports:
+    - port: 8005
+      targetPort: 8005
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aml
+  labels:
+    environment: production
+---
+# Secrets template (fill with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aml-secrets
+  namespace: aml
+type: Opaque
+stringData:
+  database_url: "postgresql+asyncpg://aml_user:CHANGE_ME@postgres:5432/aml_db"
+  secret_key: "CHANGE_ME_USE_RANDOM_256BIT_KEY"
+  neo4j_password: "CHANGE_ME"
+---
+# HorizontalPodAutoscaler for Client Risk API
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: client-risk-api-hpa
+  namespace: aml
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: client-risk-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

@@ -1,0 +1,167 @@
+version: '3.9'
+
+services:
+  # ─── Infrastructure ───────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks: [aml-net]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on: [zookeeper]
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks: [aml-net]
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: aml_db
+      POSTGRES_USER: aml_user
+      POSTGRES_PASSWORD: aml_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [aml-net]
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks: [aml-net]
+
+  neo4j:
+    image: neo4j:5.9
+    container_name: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/amlpassword
+    volumes:
+      - neo4jdata:/data
+    networks: [aml-net]
+
+  # ─── Microservices ────────────────────────────────────────────────────────
+  client-risk-api:
+    build: ./services/client-risk-api
+    container_name: client-risk-api
+    ports:
+      - "8001:8001"
+    env_file: .env
+    depends_on: [kafka, postgres, redis]
+    networks: [aml-net]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  transaction-risk-api:
+    build: ./services/transaction-risk-api
+    container_name: transaction-risk-api
+    ports:
+      - "8002:8002"
+    env_file: .env
+    depends_on: [kafka, postgres, redis]
+    networks: [aml-net]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  feature-engineering:
+    build: ./services/feature-engineering
+    container_name: feature-engineering
+    ports:
+      - "8003:8003"
+    env_file: .env
+    depends_on: [redis]
+    networks: [aml-net]
+
+  rule-engine:
+    build: ./services/rule-engine
+    container_name: rule-engine
+    ports:
+      - "8004:8004"
+    env_file: .env
+    networks: [aml-net]
+
+  ml-scoring:
+    build: ./services/ml-scoring
+    container_name: ml-scoring
+    ports:
+      - "8005:8005"
+    env_file: .env
+    networks: [aml-net]
+
+  graph-intelligence:
+    build: ./services/graph-intelligence
+    container_name: graph-intelligence
+    ports:
+      - "8006:8006"
+    env_file: .env
+    depends_on: [neo4j, redis]
+    networks: [aml-net]
+
+  risk-aggregation:
+    build: ./services/risk-aggregation
+    container_name: risk-aggregation
+    ports:
+      - "8007:8007"
+    env_file: .env
+    depends_on: [postgres, kafka]
+    networks: [aml-net]
+
+  alert-service:
+    build: ./services/alert-service
+    container_name: alert-service
+    ports:
+      - "8008:8008"
+    env_file: .env
+    depends_on: [postgres, kafka]
+    networks: [aml-net]
+
+  audit-service:
+    build: ./services/audit-service
+    container_name: audit-service
+    ports:
+      - "8009:8009"
+    env_file: .env
+    depends_on: [postgres, kafka]
+    networks: [aml-net]
+
+  api-gateway:
+    image: nginx:1.25-alpine
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - client-risk-api
+      - transaction-risk-api
+    networks: [aml-net]
+
+volumes:
+  pgdata:
+  neo4jdata:
+
+networks:
+  aml-net:
+    driver: bridge

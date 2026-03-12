@@ -1,0 +1,96 @@
+{
+  "version": "1.0",
+  "updated": "2026-03-12",
+  "rules": [
+    {
+      "id": "R001",
+      "name": "Sanctioned Country",
+      "code": "SANCTIONS_COUNTRY",
+      "description": "Client country is on OFAC/UN sanctions list",
+      "weight": 50,
+      "active": true,
+      "regulatory_reference": "OFAC SDN List"
+    },
+    {
+      "id": "R002",
+      "name": "PEP Flag",
+      "code": "PEP_FLAG",
+      "description": "Client is a Politically Exposed Person",
+      "weight": 30,
+      "active": true,
+      "regulatory_reference": "FATF Recommendation 12"
+    },
+    {
+      "id": "R003",
+      "name": "Adverse Media",
+      "code": "ADVERSE_MEDIA",
+      "description": "Negative news or adverse media coverage found",
+      "weight": 20,
+      "active": true,
+      "regulatory_reference": "FATF Recommendation 10"
+    },
+    {
+      "id": "R004",
+      "name": "High Risk Industry",
+      "code": "HIGH_RISK_INDUSTRY",
+      "description": "Client operates in a high-risk industry (crypto, gambling, firearms, etc.)",
+      "weight": 20,
+      "active": true,
+      "regulatory_reference": "FATF Guidance on Virtual Assets"
+    },
+    {
+      "id": "R005",
+      "name": "High Cash Ratio",
+      "code": "HIGH_CASH_RATIO",
+      "description": "Cash transactions exceed 30% of total volume",
+      "weight": 15,
+      "active": true,
+      "regulatory_reference": "Bank Secrecy Act Rule 31 CFR 1010.330"
+    },
+    {
+      "id": "R006",
+      "name": "High International Transaction Ratio",
+      "code": "HIGH_INTERNATIONAL_RATIO",
+      "description": "International transactions exceed 60% of total volume",
+      "weight": 10,
+      "active": true,
+      "regulatory_reference": "FATF Recommendation 16"
+    },
+    {
+      "id": "R007",
+      "name": "Very High Monthly Volume",
+      "code": "VERY_HIGH_VOLUME",
+      "description": "Monthly transaction volume exceeds $10M USD",
+      "weight": 15,
+      "active": true,
+      "regulatory_reference": "FinCEN CTR Threshold"
+    },
+    {
+      "id": "R008",
+      "name": "High Risk Country",
+      "code": "HIGH_COUNTRY_RISK",
+      "description": "Client country is on the FATF grey/black list",
+      "weight": 20,
+      "active": true,
+      "regulatory_reference": "FATF High-Risk Jurisdictions"
+    },
+    {
+      "id": "R009",
+      "name": "Crypto Exposure",
+      "code": "CRYPTO_EXPOSURE",
+      "description": "Business has significant cryptocurrency exposure",
+      "weight": 25,
+      "active": true,
+      "regulatory_reference": "FATF Virtual Asset VASP Guidance"
+    },
+    {
+      "id": "R010",
+      "name": "Medium Risk Industry",
+      "code": "MEDIUM_RISK_INDUSTRY",
+      "description": "Client operates in a medium-risk industry (real estate, trading, etc.)",
+      "weight": 10,
+      "active": true,
+      "regulatory_reference": "FATF Recommendation 10"
+    }
+  ]
+}

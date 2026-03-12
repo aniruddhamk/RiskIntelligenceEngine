@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install --no-cache-dir networkx==3.2
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY ../../common /common
+RUN pip install --no-cache-dir -e /common
+COPY . .
+EXPOSE 8006
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8006"]
