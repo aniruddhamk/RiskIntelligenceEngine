@@ -1,0 +1,140 @@
+services:
+  # ─── Client Risk API ──────────────────────────────────────────────────────
+  - type: web
+    name: client-risk-api
+    env: docker
+    dockerfilePath: services/client-risk-api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_KAFKA_USERNAME
+        sync: false
+      - key: KAFKA_KAFKA_PASSWORD
+        sync: false
+      - key: FEATURE_SERVICE_URL
+        sync: false
+      - key: RULE_SERVICE_URL
+        sync: false
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: GRAPH_SERVICE_URL
+        sync: false
+      - key: AGGREGATION_SERVICE_URL
+        sync: false
+      - key: ALERT_SERVICE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MODEL_VERSION
+        value: AML_GB_v4.1
+      - key: APP_ENV
+        value: production
+
+  # ─── Transaction Risk API ─────────────────────────────────────────────────
+  - type: web
+    name: transaction-risk-api
+    env: docker
+    dockerfilePath: services/transaction-risk-api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+
+  # ─── Feature Engineering ─────────────────────────────────────────────────
+  - type: web
+    name: feature-engineering
+    env: docker
+    dockerfilePath: services/feature-engineering/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: APP_ENV
+        value: production
+
+  # ─── Rule Engine ─────────────────────────────────────────────────────────
+  - type: web
+    name: rule-engine
+    env: docker
+    dockerfilePath: services/rule-engine/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+
+  # ─── ML Scoring ──────────────────────────────────────────────────────────
+  - type: web
+    name: ml-scoring
+    env: docker
+    dockerfilePath: services/ml-scoring/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+
+  # ─── Graph Intelligence ───────────────────────────────────────────────────
+  - type: web
+    name: graph-intelligence
+    env: docker
+    dockerfilePath: services/graph-intelligence/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+
+  # ─── Risk Aggregation ─────────────────────────────────────────────────────
+  - type: web
+    name: risk-aggregation
+    env: docker
+    dockerfilePath: services/risk-aggregation/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_ENV
+        value: production
+
+  # ─── Alert Service ────────────────────────────────────────────────────────
+  - type: web
+    name: alert-service
+    env: docker
+    dockerfilePath: services/alert-service/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+
+  # ─── Audit Service ────────────────────────────────────────────────────────
+  - type: web
+    name: audit-service
+    env: docker
+    dockerfilePath: services/audit-service/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production

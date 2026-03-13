@@ -1,17 +1,16 @@
 FROM python:3.11-slim
-
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+# Install service dependencies
+COPY services/client-risk-api/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install common library
-COPY ../../common /common
+# Install common library from repo root
+COPY common /common
 RUN pip install --no-cache-dir -e /common
 
-# Copy application code
-COPY . .
+# Copy service code
+COPY services/client-risk-api/app ./app
 
 EXPOSE 8001
 
